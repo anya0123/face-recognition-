@@ -1,0 +1,23 @@
+# Virtual Environments
+venv/
+venv310/
+myvenv/
+.venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Databases & local logs
+*.db
+*.sqlite3
+*.log

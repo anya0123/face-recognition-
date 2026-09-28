@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register New Person - Instant Face Recognition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; min-height: 100vh; overflow-x: hidden;
+            padding-bottom: 3rem;
+        }
+        .container { 
+            max-width: 1200px; margin: 2rem auto; padding: 0 2rem;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .header { 
+            text-align: center; margin-bottom: 2rem;
+            background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px;
+        }
+        .header h1 { 
+            font-size: 3rem; margin-bottom: 1rem; 
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        /* Main Glass Box */
+        .glass-box { 
+            background: rgba(0, 0, 0, 0.4); padding: 2.5rem; 
+            border-radius: 25px; backdrop-filter: blur(15px); text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        /* 2-Column Responsive Layout */
+        .register-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            margin-top: 1.5rem;
+            align-items: start;
+        }
+        @media (max-width: 850px) {
+            .register-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+            .header h1 { font-size: 2.3rem; }
+            .container { padding: 0 1rem; }
+        }
+
+        /* Camera Box */
+        .camera-container { 
+            position: relative; background: rgba(0, 0, 0, 0.6); 
+            border-radius: 20px; padding: 25px; margin: 0;
+            border: 3px solid #00c6ff; 
+            box-shadow: 0 0 40px rgba(0, 198, 255, 0.3);
+            animation: pulse 3s infinite;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 360px;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 40px rgba(0, 198, 255, 0.3); }
+            50% { box-shadow: 0 0 60px rgba(0, 198, 255, 0.6); }
+        }
+        
+        .camera-preview-media {
+            width: 100%; max-width: 440px; height: auto; border-radius: 15px; 
+            border: 3px solid #00c6ff; box-shadow: 0 0 30px rgba(0, 198, 255, 0.4);
+            background: #000; display: none;
+        }
+
+        .camera-placeholder-text {
+            color: rgba(255,255,255,0.7); font-size: 1.1rem;
+            padding: 30px; text-align: center;
+        }
+
+        .camera-controls { 
+            margin-top: 20px; display: flex; justify-content: center; 
+            gap: 15px; flex-wrap: wrap; width: 100%;
+        }
+        
+        /* Buttons */
+        .control-btn, button, .btn { 
+            background: linear-gradient(45deg, #00c6ff, #0072ff); color: white; border: none; 
+            padding: 14px 28px; border-radius: 25px; cursor: pointer; 
+            font-size: 15px; transition: all 0.3s ease; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 198, 255, 0.3); text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .control-btn:hover, button:hover, .btn:hover { 
+            transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 198, 255, 0.5);
+        }
+        .btn-success {
+            background: linear-gradient(45deg, #2ed573, #10ac84);
+            box-shadow: 0 5px 15px rgba(46, 213, 115, 0.3);
+        }
+        .btn-success:hover {
+            box-shadow: 0 10px 25px rgba(46, 213, 115, 0.5);
+        }
+        .btn-retake {
+            background: linear-gradient(45deg, #ffa502, #ff7f50);
+            box-shadow: 0 5px 15px rgba(255, 165, 2, 0.3);
+        }
+
+        /* Form Inputs */
+        .form-panel {
+            background: rgba(0, 0, 0, 0.3); padding: 25px;
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: left;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block; font-size: 0.9rem; font-weight: bold;
+            margin-bottom: 8px; color: #00c6ff;
+        }
+        input { 
+            width: 100%; padding: 15px 20px; border: none; border-radius: 25px; 
+            font-size: 15px; transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.95); color: #222; outline: none;
+        }
+        input:focus {
+            background: #fff; box-shadow: 0 0 20px rgba(0, 198, 255, 0.6);
+            transform: scale(1.01);
+        }
+
+        /* Status & Alert */
+        .result { 
+            background: rgba(255, 255, 255, 0.1); padding: 20px; 
+            border-radius: 20px; margin: 20px 0; text-align: center;
+            backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: fadeIn 0.4s ease;
+        }
+        .result.known { 
+            border-left: 5px solid #2ed573; box-shadow: 0 0 20px rgba(46, 213, 115, 0.3);
+        }
+        .result.error { 
+            border-left: 5px solid #ff4757; box-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>➕ REGISTER NEW PERSON</h1>
+            <p style="font-size: 1.2rem;">Live HD Capture • Instant AI Feature Extraction • Real-Time Database Registration</p>
+        </div>
+
+        <div class="glass-box">
+            <div class="register-grid">
+                <!-- Left: Camera Section -->
+                <div>
+                    <h2 style="margin-bottom: 15px; font-size: 1.6rem; color: #00c6ff;">📸 Step 1: Capture Photo</h2>
+                    <div class="camera-container">
+                        <div id="camPlaceholder" class="camera-placeholder-text">
+                            <div style="font-size: 3.5rem; margin-bottom: 10px;">📷</div>
+                            Click <strong>"Start Camera"</strong> below to open live webcam and take a photo.
+                        </div>
+                        <video id="video" class="camera-preview-media" autoplay playsinline></video>
+                        <img id="preview" class="camera-preview-media" alt="Captured Face Preview">
+                        <canvas id="canvas" style="display: none;"></canvas>
+
+                        <div class="camera-controls">
+                            <button id="startBtn" class="control-btn" onclick="startCamera()">📹 Start Camera</button>
+                            <button id="captureBtn" class="control-btn btn-success" onclick="capturePhoto()" style="display: none;">📸 Capture Photo</button>
+                            <button id="retakeBtn" class="control-btn btn-retake" onclick="retakePhoto()" style="display: none;">🔄 Retake Photo</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Form Section -->
+                <div>
+                    <h2 style="margin-bottom: 15px; font-size: 1.6rem; color: #00c6ff;">📝 Step 2: Personal Details</h2>
+                    <div class="form-panel">
+                        <form id="regForm" onsubmit="submitRegistration(event)">
+                            <div class="form-group">
+                                <label>👤 Full Name *</label>
+                                <input type="text" id="name" placeholder="Enter full name" required autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label>🎂 Age</label>
+                                <input type="number" id="age" placeholder="Enter age (optional)" min="1" max="120">
+                            </div>
+                            <div class="form-group">
+                                <label>📞 Phone Number</label>
+                                <input type="tel" id="phone" placeholder="Enter 10-digit mobile number">
+                            </div>
+                            <div class="form-group">
+                                <label>✉️ Email Address</label>
+                                <input type="email" id="email" placeholder="Enter email address">
+                            </div>
+
+                            <button type="submit" id="submitBtn" class="btn btn-success" style="width: 100%; margin-top: 15px; font-size: 1.1rem;" disabled>
+                                💾 Save & Register Person
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultBox"></div>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(255,255,255,0.2); text-align: center;">
+                <a href="/" class="btn" style="background: rgba(255,255,255,0.15); box-shadow: none;">🏠 Return to Home Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        let capturedBase64 = null;
+
+        async function startCamera() {
+            try {
+                if (stream) stream.getTracks().forEach(t => t.stop());
+                
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
+                });
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                video.style.display = 'block';
+                document.getElementById('camPlaceholder').style.display = 'none';
+                document.getElementById('preview').style.display = 'none';
+                
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'inline-flex';
+                document.getElementById('retakeBtn').style.display = 'none';
+            } catch (err) {
+                alert('❌ Camera Access Error: ' + err.message + '\nPlease enable camera permissions in your browser.');
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const preview = document.getElementById('preview');
+            const ctx = canvas.getContext('2d');
+
+            // Standard capture size for fast transmission and encoding
+            const targetWidth = Math.min(video.videoWidth || 640, 640);
+            const targetHeight = Math.min(video.videoHeight || 480, 480);
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+
+            capturedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+            preview.src = capturedBase64;
+            preview.style.display = 'block';
+            video.style.display = 'none';
+
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+                stream = null;
+            }
+
+            document.getElementById('captureBtn').style.display = 'none';
+            document.getElementById('retakeBtn').style.display = 'inline-flex';
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        function retakePhoto() {
+            capturedBase64 = null;
+            document.getElementById('submitBtn').disabled = true;
+            startCamera();
+        }
+
+        async function submitRegistration(e) {
+            e.preventDefault();
+
+            if (!capturedBase64) {
+                alert('⚠️ Please capture a face photo first!');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const resultBox = document.getElementById('resultBox');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Extracting Face Encodings & Saving...';
+            resultBox.innerHTML = '';
+
+            const payload = {
+                name: document.getElementById('name').value.trim(),
+                age: document.getElementById('age').value || null,
+                phone: document.getElementById('phone').value || null,
+                email: document.getElementById('email').value || null,
+                image: capturedBase64
+            };
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const res = await response.json();
+
+                if (res.success) {
+                    resultBox.innerHTML = `
+                        <div class="result known" style="margin-top: 25px;">
+                            <h3 style="color: #2ed573; font-size: 1.4rem; margin-bottom: 8px;">✅ ${res.message}</h3>
+                            <p style="margin-bottom: 15px;">Face biometric data saved successfully.</p>
+                            <a href="/" class="btn" style="padding: 10px 24px;">🚀 Test on Live Camera</a>
+                        </div>
+                    `;
+                    document.getElementById('regForm').reset();
+                    capturedBase64 = null;
+                    document.getElementById('preview').style.display = 'none';
+                    document.getElementById('camPlaceholder').style.display = 'block';
+                    document.getElementById('retakeBtn').style.display = 'none';
+                    document.getElementById('startBtn').style.display = 'inline-flex';
+                } else {
+                    resultBox.innerHTML = `
+                        <div class="result error" style="margin-top: 25px;">
+                            <h3 style="color: #ff4757; margin-bottom: 5px;">❌ Registration Error</h3>
+                            <p>${res.error || 'Failed to register person.'}</p>
+                        </div>
+                    `;
+                    submitBtn.disabled = false;
+                }
+            } catch (err) {
+                resultBox.innerHTML = `
+                    <div class="result error" style="margin-top: 25px;">
+                        <h3 style="color: #ff4757; margin-bottom: 5px;">❌ Server Error</h3>
+                        <p>${err.message}</p>
+                    </div>
+                `;
+                submitBtn.disabled = false;
+            } finally {
+                submitBtn.innerHTML = '💾 Save & Register Person';
+            }
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (stream) stream.getTracks().forEach(t => t.stop());
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> Face Recognition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }
+        .header { 
+            text-align: center; margin-bottom: 2rem;
+            background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px;
+        }
+        .header h1 { 
+            font-size: 3rem; margin-bottom: 1rem; 
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            background-clip: text;
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tabs { 
+            display: flex; justify-content: center; margin-bottom: 2rem; 
+            gap: 1rem; flex-wrap: wrap;
+        }
+        .tab { 
+            background: rgba(255, 255, 255, 0.1); color: white; border: none; 
+            padding: 1.2rem 2.5rem; border-radius: 30px; cursor: pointer; 
+            transition: all 0.3s ease; font-size: 1.1rem; font-weight: bold;
+            border: 2px solid transparent;
+        }
+        .tab:hover { 
+            background: rgba(255, 255, 255, 0.2); transform: translateY(-3px); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .tab.active { 
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            transform: translateY(-3px); border-color: #00c6ff; 
+            box-shadow: 0 0 30px rgba(0, 198, 255, 0.6);
+        }
+        
+        .tab-content { 
+            display: none; background: rgba(0, 0, 0, 0.4); padding: 2.5rem; 
+            border-radius: 25px; backdrop-filter: blur(15px); text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tab-content.active { display: block; }
+        
+        .camera-container { 
+            position: relative; background: rgba(0, 0, 0, 0.6); 
+            border-radius: 20px; padding: 25px; margin: 25px 0;
+            border: 3px solid #00c6ff; box-shadow: 0 0 40px rgba(0, 198, 255, 0.3);
+        }
+        .camera-feed { 
+            width: 100%; max-width: 640px; height: auto; border-radius: 15px; 
+            border: 3px solid #00c6ff; background: #000;
+        }
+        .camera-controls { 
+            margin: 20px 0; display: flex; justify-content: center; 
+            gap: 15px; flex-wrap: wrap;
+        }
+        .control-btn { 
+            background: linear-gradient(45deg, #00c6ff, #0072ff); color: white; border: none; 
+            padding: 12px 25px; border-radius: 25px; cursor: pointer; 
+            font-size: 14px; font-weight: bold;
+        }
+        .control-btn:hover { transform: translateY(-3px); }
+        
+        .camera-status { 
+            margin-top: 20px; padding: 20px; border-radius: 15px; font-weight: bold;
+            background: linear-gradient(45deg, rgba(0, 255, 0, 0.1), rgba(0, 255, 100, 0.1));
+            border-left: 5px solid #00ff00;
+        }
+        
+        input, button, .btn { 
+            padding: 15px 25px; margin: 10px; border: none; border-radius: 25px; 
+            font-size: 16px; transition: all 0.3s ease;
+        }
+        button, .btn { 
+            background: linear-gradient(45deg, #00c6ff, #0072ff); color: white; 
+            cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block;
+        }
+        button:hover, .btn:hover { transform: translateY(-3px); }
+        input { background: rgba(255, 255, 255, 0.9); color: #333; }
+        
+        video { 
+            max-width: 500px; border-radius: 15px; margin: 20px; 
+            border: 3px solid #00c6ff;
+        }
+        
+        .result { 
+            background: rgba(255, 255, 255, 0.1); padding: 25px; 
+            border-radius: 20px; margin: 25px 0; text-align: left;
+        }
+        .result.known { border-left: 5px solid #2ed573; }
+        .result.unknown { border-left: 5px solid #ffa502; }
+        .result.error { border-left: 5px solid #ff4757; }
+        
+        /* User Details Panel Styles */
+        .user-details-panel {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            padding: 20px;
+            border: 3px solid #00c6ff;
+            box-shadow: 0 0 40px rgba(0, 198, 255, 0.3);
+            backdrop-filter: blur(15px);
+        }
+        
+        .details-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 198, 255, 0.3);
+        }
+        
+        .details-header h3 {
+            color: #00c6ff;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+        
+        .status-indicator {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .status-indicator.scanning {
+            background: linear-gradient(45deg, #ffa502, #ff6348);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.detected {
+            background: linear-gradient(45deg, #2ed573, #1e90ff);
+        }
+        
+        .details-content {
+            min-height: 400px;
+        }
+        
+        .no-detection {
+            text-align: center;
+            padding: 50px 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .scanning-animation {
+            font-size: 3rem;
+            animation: rotate 2s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        .user-profile {
+            text-align: center;
+        }
+        
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid #00c6ff;
+            margin: 0 auto 20px;
+            object-fit: cover;
+            box-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
+        }
+        
+        .user-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #00c6ff;
+        }
+        
+        .info-value {
+            color: white;
+            text-align: right;
+            max-width: 180px;
+            word-wrap: break-word;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Compact Multi-User Styles */
+        .user-profile-compact {
+            text-align: left;
+        }
+        
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .profile-photo-small {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #00c6ff;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .user-name-status {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #00c6ff;
+            margin-bottom: 4px;
+        }
+        
+        .user-status {
+            font-size: 0.85rem;
+            color: #2ed573;
+            font-weight: bold;
+        }
+        
+        .user-details-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+        
+        .detail-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs { flex-direction: column; align-items: center; }
+            .header h1 { font-size: 2.5rem; }
+            .user-details-panel { flex: 1; min-width: 100%; }
+            .user-details-compact { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Face Recognition System</h1>
+            <p style="font-size: 1.2rem;">Instant camera switching • Zero delay • Real-time processing</p>
+        </div>
+
+        <div class="tabs">
+            <button id="tab-btn-upload" class="tab active" onclick="showTab('upload', this)">📁 Upload Image</button>
+            <button id="tab-btn-camera" class="tab" onclick="showTab('camera', this)">📹 Live Camera</button>
+            <button id="tab-btn-capture" class="tab" onclick="showTab('capture', this)">📸 Capture & Recognize</button>
+        </div>
+
+        <div id="upload" class="tab-content active">
+            <h2>📁 Upload Image for Recognition</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" id="imageInput" name="image" accept="image/*" required>
+                <button type="submit">🔍 Recognize Face</button>
+            </form>
+            <div id="uploadResult"></div>
+        </div>
+
+        <div id="camera" class="tab-content">
+            <h2>📹 INSTANT Live Camera Feed</h2>
+            <p style="margin-bottom: 20px;">Background thread active • Zero delay switching • Real-time date/time</p>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+                <div class="camera-container" style="flex: 1; min-width: 640px;">
+                    <div id="cameraWrapper" style="position: relative; width: 100%; max-width: 640px; margin: 0 auto;">
+                        <img id="cameraFeed" class="camera-feed" alt="Live Camera Feed">
+                        <div id="cameraOffPlaceholder" style="display: none; width: 100%; min-height: 480px; background: rgba(0,0,0,0.85); border-radius: 15px; border: 3px solid #555; flex-direction: column; align-items: center; justify-content: center; color: #bbb; padding: 40px 20px;">
+                            <div style="font-size: 4rem; margin-bottom: 15px;">📷🚫</div>
+                            <h3 style="color: #fff; font-size: 1.5rem; margin-bottom: 10px;">Camera is Turned OFF</h3>
+                            <p style="font-size: 1rem; color: #aaa; margin-bottom: 20px;">Live streaming and face scanning are currently paused.</p>
+                            <button class="control-btn" style="background: linear-gradient(45deg, #2ed573, #1e90ff); font-size: 1rem; padding: 12px 30px;" onclick="toggleLiveCamera()">▶️ Turn Camera ON</button>
+                        </div>
+                    </div>
+                    <div class="camera-controls">
+                        <button id="toggleCameraBtn" class="control-btn" style="background: linear-gradient(45deg, #ff4757, #ff6b81);" onclick="toggleLiveCamera()">⏹️ Turn Camera OFF</button>
+                        <button class="control-btn" onclick="refreshCamera()">🔄 Refresh</button>
+                        <button class="control-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                    </div>
+                    <div id="cameraStatus" class="camera-status">
+                        ⚡ INSTANT CAMERA READY • Background processing active
+                    </div>
+                </div>
+                
+                <!-- Live User Details Panel -->
+                <div id="userDetailsPanel" class="user-details-panel" style="flex: 0 0 350px; min-height: 500px; max-height: 80vh; overflow-y: auto;">
+                    <div class="details-header">
+                        <h3>👤 DETECTED USER</h3>
+                        <div class="status-indicator" id="detectionStatus">🔍 Scanning...</div>
+                    </div>
+                    <div id="userDetailsContent" class="details-content">
+                        <div class="no-detection">
+                            <div class="scanning-animation">🔍</div>
+                            <p>No user detected</p>
+                            <small>Stand in front of camera</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="capture" class="tab-content">
+            <h2>📸 Capture & Recognize</h2>
+            <video id="video" autoplay></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+            <div>
+                <button id="startBtn" onclick="startCamera()">📹 Start Camera</button>
+                <button id="captureBtn" onclick="captureImage()" style="display: none;">📸 Capture Photo</button>
+                <button id="retakeBtn" onclick="retakePhoto()" style="display: none;">🔄 Retake Photo</button>
+            </div>
+            <div id="capturedImage" style="display: none;">
+                <h3>📷 Captured Image</h3>
+                <img id="preview" alt="Captured" style="max-width: 350px; border-radius: 15px; margin: 20px; border: 3px solid #00c6ff;">
+                <div>
+                    <button onclick="recognizeCaptured()">🔍 Recognize This Face</button>
+                </div>
+            </div>
+            <div id="captureResult"></div>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 25px; border-top: 2px solid rgba(255,255,255,0.2); text-align: center;">
+            <a href="/register" class="btn">➕ Register New Person</a>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        let capturedImageData = null;
+        let currentTab = 'upload';
+        let isCameraOn = false;
+
+        function toggleLiveCamera() {
+            const img = document.getElementById('cameraFeed');
+            const placeholder = document.getElementById('cameraOffPlaceholder');
+            const toggleBtn = document.getElementById('toggleCameraBtn');
+            const status = document.getElementById('cameraStatus');
+            const statusElement = document.getElementById('detectionStatus');
+            const contentElement = document.getElementById('userDetailsContent');
+
+            if (isCameraOn) {
+                // Turn Camera OFF
+                isCameraOn = false;
+                if (img) {
+                    img.src = '';
+                    img.style.display = 'none';
+                }
+                if (placeholder) {
+                    placeholder.style.display = 'flex';
+                }
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '▶️ Turn Camera ON';
+                    toggleBtn.style.background = 'linear-gradient(45deg, #2ed573, #1e90ff)';
+                }
+                if (status) {
+                    status.innerHTML = '⏸️ CAMERA IS TURNED OFF • Click "Turn Camera ON" to resume';
+                    status.style.borderLeftColor = '#ff4757';
+                }
+                stopUserDetailsUpdates();
+
+                if (statusElement) {
+                    statusElement.className = 'status-indicator';
+                    statusElement.style.background = 'rgba(255,255,255,0.2)';
+                    statusElement.textContent = '⏸️ Camera OFF';
+                }
+                if (contentElement) {
+                    contentElement.innerHTML = `
+                        <div class="no-detection">
+                            <div style="font-size: 3rem; margin-bottom: 20px;">⏸️</div>
+                            <p>Camera is currently OFF</p>
+                            <small>Turn ON camera to start face scanning</small>
+                        </div>
+                    `;
+                }
+            } else {
+                // Turn Camera ON
+                isCameraOn = true;
+                if (img) img.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '⏹️ Turn Camera OFF';
+                    toggleBtn.style.background = 'linear-gradient(45deg, #ff4757, #ff6b81)';
+                }
+                if (status) status.style.borderLeftColor = '#00ff00';
+                activateCamera();
+            }
+        }
+
+        function showTab(tabName, btnElement) {
+            console.log(`Switching to: ${tabName}`);
+            
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            const targetTab = document.getElementById(tabName);
+            if (targetTab) targetTab.classList.add('active');
+            
+            if (btnElement) {
+                btnElement.classList.add('active');
+            } else {
+                const btn = document.getElementById('tab-btn-' + tabName);
+                if (btn) btn.classList.add('active');
+            }
+            
+            // Stop capture camera when switching away from capture
+            if (currentTab === 'capture' && tabName !== 'capture' && stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                resetCaptureUI();
+                console.log('Capture camera released');
+            }
+            
+            // Stop live camera when switching away from camera tab
+            if (tabName !== 'camera') {
+                const img = document.getElementById('cameraFeed');
+                if (img) img.src = '';
+                stopUserDetailsUpdates();
+                isCameraOn = false;
+                console.log('Live camera stopped on tab switch');
+            }
+            
+            currentTab = tabName;
+            
+            // INSTANT real-time camera activation on switching to Live Camera tab
+            if (tabName === 'camera') {
+                isCameraOn = true;
+                const toggleBtn = document.getElementById('toggleCameraBtn');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '⏹️ Turn Camera OFF';
+                    toggleBtn.style.background = 'linear-gradient(45deg, #ff4757, #ff6b81)';
+                }
+                const placeholder = document.getElementById('cameraOffPlaceholder');
+                if (placeholder) placeholder.style.display = 'none';
+                const img = document.getElementById('cameraFeed');
+                if (img) img.style.display = 'block';
+
+                setTimeout(activateCamera, 50);
+            }
+        }
+
+        function activateCamera() {
+            if (!isCameraOn || currentTab !== 'camera') return;
+            console.log('INSTANT camera activation');
+            const img = document.getElementById('cameraFeed');
+            const placeholder = document.getElementById('cameraOffPlaceholder');
+            const status = document.getElementById('cameraStatus');
+            
+            if (img) img.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+            if (status) status.innerHTML = '⚡ CONNECTING LIVE CAMERA...';
+            
+            // Set source immediately (background thread always running)
+            const timestamp = new Date().getTime();
+            if (img) {
+                img.src = '/camera?' + timestamp;
+                
+                img.onload = function() {
+                    if (isCameraOn && currentTab === 'camera') {
+                        if (status) status.innerHTML = '✅ LIVE CAMERA ACTIVE • Real-time date/time display • Background processing';
+                        console.log('Camera loaded INSTANTLY!');
+                        startUserDetailsUpdates();
+                    }
+                };
+                
+                img.onerror = function() {
+                    if (isCameraOn && currentTab === 'camera') {
+                        if (status) status.innerHTML = '❌ Camera error • <button class="control-btn" onclick="refreshCamera()">Retry</button>';
+                    }
+                };
+            }
+        }
+        
+        let userDetailsInterval = null;
+        
+        function startUserDetailsUpdates() {
+            // Clear any existing interval
+            if (userDetailsInterval) {
+                clearInterval(userDetailsInterval);
+            }
+            
+            // Update user details every 1 second
+            userDetailsInterval = setInterval(updateUserDetails, 1000);
+            console.log('Started live user details updates');
+        }
+        
+        function stopUserDetailsUpdates() {
+            if (userDetailsInterval) {
+                clearInterval(userDetailsInterval);
+                userDetailsInterval = null;
+                console.log('Stopped user details updates');
+            }
+        }
+        
+        async function updateUserDetails() {
+            if (!isCameraOn || currentTab !== 'camera') return;
+            try {
+                const response = await fetch('/current_user');
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('detectionStatus');
+                const contentElement = document.getElementById('userDetailsContent');
+                
+                if (data.success && data.users && data.users.length > 0) {
+                    // Users detected - show details
+                    statusElement.className = 'status-indicator detected';
+                    statusElement.textContent = `✅ ${data.count} User${data.count > 1 ? 's' : ''} Detected`;
+                    
+                    let usersHtml = '';
+                    data.users.forEach((user, index) => {
+                        usersHtml += `
+                            <div class="user-profile-compact" style="${index > 0 ? 'margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0, 198, 255, 0.3);' : ''}">
+                                <div class="user-header">
+                                    <img src="/static/captures/${user.image_path}" 
+                                         alt="Profile Photo" 
+                                         class="profile-photo-small" 
+                                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIzMCIgZmlsbD0iIzMzMyIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMjIiIHI9IjEwIiBmaWxsPSIjNjY2Ii8+PHBhdGggZD0iTTEwIDQ1QzEwIDM4IDE4IDMwIDMwIDMwUzUwIDM4IDUwIDQ1IiBmaWxsPSIjNjY2Ii8+PC9zdmc+'">
+                                    <div class="user-name-status">
+                                        <div class="user-name">${user.name}</div>
+                                        <div class="user-status">✅ ${user.status}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="user-details-compact">
+                                    <div class="detail-item">🎂 Age: ${user.age || 'N/A'}</div>
+                                    <div class="detail-item">📞 ${user.phone}</div>
+                                    <div class="detail-item" style="grid-column: 1 / -1;">✉️ ${user.email || 'N/A'}</div>
+                                    <div class="detail-item" style="grid-column: 1 / -1;">🏠 House: ${user.address || 'N/A'}</div>
+                                    <div class="detail-item">🆔 ${user.aadhaar}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    contentElement.innerHTML = usersHtml;
+                } else {
+                    // No user detected
+                    statusElement.className = 'status-indicator scanning';
+                    statusElement.textContent = '🔍 Scanning...';
+                    
+                    contentElement.innerHTML = `
+                        <div class="no-detection">
+                            <div class="scanning-animation">🔍</div>
+                            <p>No user detected</p>
+                            <small>Stand in front of camera</small>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error updating user details:', error);
+            }
+        }
+
+        function refreshCamera() {
+            if (!isCameraOn) {
+                toggleLiveCamera();
+                return;
+            }
+            const img = document.getElementById('cameraFeed');
+            const status = document.getElementById('cameraStatus');
+            
+            // Show refreshing status
+            status.innerHTML = '🔄 Refreshing camera...';
+            
+            // Clear current source immediately
+            img.src = '';
+            
+            // Force immediate reload with cache busting
+            setTimeout(() => {
+                const timestamp = new Date().getTime() + Math.random();
+                img.src = '/camera?t=' + timestamp;
+                
+                img.onload = function() {
+                    status.innerHTML = '✅ CAMERA REFRESHED • Live feed active';
+                };
+                
+                img.onerror = function() {
+                    if (isCameraOn) {
+                        status.innerHTML = '❌ Refresh failed • <button class="control-btn" onclick="refreshCamera()">Try Again</button>';
+                    }
+                };
+            }, 50);
+        }
+
+        function toggleFullscreen() {
+            const img = document.getElementById('cameraFeed');
+            if (img.requestFullscreen) {
+                img.requestFullscreen();
+            } else if (img.webkitRequestFullscreen) {
+                img.webkitRequestFullscreen();
+            }
+        }
+
+        // Upload form
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('image', document.getElementById('imageInput').files[0]);
+
+            try {
+                const response = await fetch('/recognize', { method: 'POST', body: formData });
+                const result = await response.json();
+                displayResult('uploadResult', result);
+            } catch (error) {
+                document.getElementById('uploadResult').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        });
+
+        // Capture functions
+        async function startCamera() {
+            try {
+                if (stream) stream.getTracks().forEach(track => track.stop());
+                
+                // Wait a bit to ensure camera is released
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 }, 
+                        height: { ideal: 480 },
+                        deviceId: { ideal: 'default' }
+                    }
+                });
+                document.getElementById('video').srcObject = stream;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'inline-block';
+            } catch (error) {
+                alert('❌ Camera access error: ' + error.message + '. Please close other camera applications.');
+            }
+        }
+
+        function captureImage() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+            
+            capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+            document.getElementById('preview').src = capturedImageData;
+            document.getElementById('capturedImage').style.display = 'block';
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            document.getElementById('video').style.display = 'none';
+            document.getElementById('captureBtn').style.display = 'none';
+            document.getElementById('retakeBtn').style.display = 'inline-block';
+        }
+
+        function retakePhoto() {
+            resetCaptureUI();
+            startCamera();
+        }
+
+        function resetCaptureUI() {
+            document.getElementById('capturedImage').style.display = 'none';
+            document.getElementById('video').style.display = 'block';
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('captureBtn').style.display = 'none';
+            document.getElementById('retakeBtn').style.display = 'none';
+            capturedImageData = null;
+        }
+
+        async function recognizeCaptured() {
+            if (!capturedImageData) return;
+
+            try {
+                const response = await fetch(capturedImageData);
+                const blob = await response.blob();
+                const formData = new FormData();
+                formData.append('image', blob, 'captured.jpg');
+
+                const recognizeResponse = await fetch('/recognize', { method: 'POST', body: formData });
+                const result = await recognizeResponse.json();
+                displayResult('captureResult', result);
+            } catch (error) {
+                document.getElementById('captureResult').innerHTML = 
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function displayResult(containerId, result) {
+            const container = document.getElementById(containerId);
+            if (result.success) {
+                if (result.name === 'Unknown') {
+                    container.innerHTML = `
+                        <div class="result unknown">
+                            <h3>❓ Unknown Person</h3>
+                            <p>This person is not in our database.</p>
+                            <a href="/register" class="btn">➕ Register New Person</a>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="result known">
+                            <h3>✅ Person Recognized</h3>
+                            <div style="margin: 15px 0;">
+                                <p><strong>Name:</strong> ${result.name}</p>
+                                <p><strong>Age:</strong> ${result.age || 'N/A'}</p>
+                                <p><strong>Phone:</strong> ${result.phone || 'N/A'}</p>
+                                <p><strong>Email:</strong> ${result.email || 'N/A'}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                container.innerHTML = `<div class="result error">❌ ${result.error}</div>`;
+            }
+        }
+
+        // Cleanup
+        window.addEventListener('beforeunload', function() {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+        });
+
+        // Initialize
+        window.addEventListener('load', function() {
+            console.log(' FACE RECOGNOTION SYSTEM loaded - camera ready!');
+            if (currentTab === 'camera') {
+                setTimeout(activateCamera, 50);
+            }
+        });
+    </script>
+</body>
+</html>
